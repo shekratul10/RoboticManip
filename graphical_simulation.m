@@ -6,24 +6,46 @@ view(3);
 axis equal;
 axis([-0.5 0.5 -0.5 0.5 -0.1 0.5]);
 
-points = generate_square_points('yz', 5, [0,0.1], [0,0.1]);
-for i = 1:length(input)
-    plot3(input(1,i), input(2,i), input(3,i), 'o', 'MarkerSize', 4, 'MarkerFaceColor', 'r', 'MarkerEdgeColor', 'b')
+global L1;
+global L2;
+global L3;
+
+L1 = 0.130;
+L2 = 0.124;
+L3 = 0.126;
+
+
+points = generate_square_points('xy', 5, [-0.1,-0.1], [-0.2,-0.2], 0.077);
+
+for i = 1:length(points)
+    plot3(points(1,i), points(2,i), points(3,i), 'o', 'MarkerSize', 4, 'MarkerFaceColor', 'green', 'MarkerEdgeColor', 'black')
 end
 
 % Base Robot
-% joint_angles = [0,0,0,0];
-% plot_robot(joint_angles);
+joint_angles = [pi/2,10 * 0.0174533,0,-70/0.0174533];
+plot_robot(joint_angles);
 
-for i = 1:length(points)
-    xdes = points(1,i);
-    ydes = points(2,i);
-    zdes = points(3,i);
+thetas = inverse_kinematics(0.2, 0, 0.03, 0.130, 0.124, 0.126, -pi/2);
+display(thetas);
+plot_robot(thetas);
 
-    thetas = inverse_kinematics(xdes, ydes, zdes, -pi/2, 0.130, 0.124, 0.126);
-    plot_robot(thetas);
-    % pause(0.2);
-end
+
+% for i = 1:length(points)
+%     x = points(1,i);
+%     y = points(2,i);
+%     z = points(3,i);
+% 
+%     if norm([x, y, z+0.077]) > L1 + L2 + L3
+%         disp([num2str(x), ', ', num2str(y), ', ', num2str(z), ' is ', num2str(norm([x, y, z+0.077])), ' away']);
+%         max_reach = L1 + L2 + L3;
+%         disp(['Exceeds maximum reach of ', num2str(max_reach)]);
+%     else
+%         thetas = inverse_kinematics(x, y, z, 0.130, 0.124, 0.126);
+%         plot_robot(thetas);
+%     end
+% 
+%     pause(0.1);
+% end
 
 % Plot robot
 function plot_robot(joint_angles)
@@ -73,12 +95,13 @@ function plot_link(Ti_1, T, color, thickness)
     curr_pos = T(:,4);
 
     % Plot link
-    plot3([prev_pos(1), curr_pos(1)], [prev_pos(2), curr_pos(2)], [prev_pos(3), curr_pos(3)], 'Color','blue','LineWidth',1);
+    plot3([prev_pos(1), curr_pos(1)], [prev_pos(2), curr_pos(2)], [prev_pos(3), curr_pos(3)], 'Color',color,'LineWidth', thickness);
 
     % Plot frames
-    % plot3([curr_pos(1), curr_pos(1) + x(1)], [curr_pos(2), curr_pos(2) + x(2)], [curr_pos(3), curr_pos(3) + x(3)], color, 'LineWidth', thickness);
-    % plot3([curr_pos(1), curr_pos(1) + y(1)], [curr_pos(2), curr_pos(2) + y(2)], [curr_pos(3), curr_pos(3) + y(3)], color, 'LineWidth', thickness);
-    % plot3([curr_pos(1), curr_pos(1) + z(1)], [curr_pos(2), curr_pos(2) + z(2)], [curr_pos(3), curr_pos(3) + z(3)], color, 'LineWidth', thickness);
+    % frame_color = 'blue'
+    % plot3([curr_pos(1), curr_pos(1) + x(1)], [curr_pos(2), curr_pos(2) + x(2)], [curr_pos(3), curr_pos(3) + x(3)], frame_color, 'LineWidth', thickness);
+    % plot3([curr_pos(1), curr_pos(1) + y(1)], [curr_pos(2), curr_pos(2) + y(2)], [curr_pos(3), curr_pos(3) + y(3)], frame_color, 'LineWidth', thickness);
+    % plot3([curr_pos(1), curr_pos(1) + z(1)], [curr_pos(2), curr_pos(2) + z(2)], [curr_pos(3), curr_pos(3) + z(3)], frame_color, 'LineWidth', thickness);
 end
 
 function T = dhparam2matrix(a, alpha, d, theta)
@@ -89,7 +112,8 @@ function T = dhparam2matrix(a, alpha, d, theta)
 end
 
 
-function theta = inverse_kinematics(x, y, z, gamma, L1, L2, L3)
+function theta = inverse_kinematics(x, y, z, L1, L2, L3, input)
+
     % calculates t1 between - pi/2 and + pi / 2 given x and y coords
     t1 = atan2(y, x);
     t1 = mod(t1 + pi, 2*pi) - pi;
@@ -97,33 +121,45 @@ function theta = inverse_kinematics(x, y, z, gamma, L1, L2, L3)
     % assume L3 is directly down and accounts for offset
     height = z - 0.077;
     r = sqrt(x^2 + y^2);
+
+    if input == 1000
+        gamma = -pi/2;
+        x = r - L3 * cos(gamma);
+        y = height - L3 * sin(gamma);
+        if norm([x, y]) > L1 + L2
+            angle = atan(height/r);
+        else
+            angle = (- pi/2 + atan2(height, r)) / 2;
+        end
+        gamma = angle;
+    else
+        gamma = input;
+    end
     
+    % gamma: angle of last link with respect to the horizontal axis
+    % from + pi/2 straight up to -pi / 2 straight down
+
     output = three_link_planar_ik(r, height, gamma, L1, L2, L3);
 
     theta = [t1; output];
 end
 
 function theta = three_link_planar_ik(x, y, gamma, L1, L2, L3)
-    % gamma: angle of last link with respect to the horizontal axis
-    % from + pi/2 straight up to -pi / 2 straight down
     x = x - L3 * cos(gamma);
     y = y - L3 * sin(gamma);
     
+    [t1, t2] = two_link_planar_ik(x, y, L1, L2);
+    t3 = - t1 - t2 + gamma;
+    theta = [t1; t2; t3];
+end
+
+
+function [t1, t2] = two_link_planar_ik(x, y, L1, L2)
     if norm([x, y]) > L1 + L2
-        disp(x);
-        disp(y);
-        error('Position out of reachable workspace');
+        error('Two Link: Position out of reachable workspace');
     end
     
     % elbow up config, to change to elbow down, remove negative sign
     t2 = - acos((x^2 + y^2 - L1^2 - L2^2) / (2 * L1 * L2));
     t1 = atan2(y, x) - atan2(L2 * sin(t2), L1 + L2 * cos(t2));
-
-    % if t1 < -pi || t1 > pi || t2 < 0 || t2 > pi
-    %     error('Computed joint angles out of range');
-    % end
-    
-    t3 = - t1 - t2 + gamma;
-    theta = [t1; t2; t3];
 end
-

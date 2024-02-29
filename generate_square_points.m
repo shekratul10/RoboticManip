@@ -1,7 +1,7 @@
-function output = generate_square_points(plane, res, c1, c2)
-    x = zeros(1,res*4);
-    y = zeros(1,res*4);
-    z = zeros(1,res*4);
+function output = generate_square_points(plane, res, c1, c2, offset)
+    x = linspace(offset, offset, res*4);
+    y = linspace(offset, offset, res*4);
+    z = linspace(offset, offset, res*4);
 
     % Generate points for the selected plane
     if strcmpi(plane, 'xy')
