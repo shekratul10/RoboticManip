@@ -22,7 +22,7 @@ points = generate_square_points('xy', 30, [0.05,0.05], [0.15,0.15], 0);
 for i = 1:length(points)
     theta = IK(points(1, i), points(2, i), points(3, i), -pi/2);
     links = plot_robot(theta);
-    pause(0.1);
+    pause(0.01);
     if i ~= length(points)
         delete(links);
     end
