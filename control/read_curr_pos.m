@@ -1,9 +1,12 @@
-function [x, y, z, gamma] = read_curr_pos(port_num, PROTOCOL_VERSION,ADDR_PRO_PRESENT_POSITION)
+function [x, y, z, gamma] = read_curr_pos(port_num)
     ID_BASE                     = 11;
     ID_1                        = 12;
     ID_2                        = 13;
     ID_3                        = 14;
     ID_CLAW                     = 15;
+    
+    PROTOCOL_VERSION            = 2.0;
+    ADDR_PRO_PRESENT_POSITION    = 132; 
 
     pos_base = read4ByteTxRx(port_num, PROTOCOL_VERSION, ID_BASE, ADDR_PRO_PRESENT_POSITION);
     pos_1 = read4ByteTxRx(port_num, PROTOCOL_VERSION, ID_1, ADDR_PRO_PRESENT_POSITION);

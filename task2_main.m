@@ -101,11 +101,6 @@ end
 
 %% ----- SET CONSTANTS ----------- %%
 
-ADDR_MAX_POS = 48;
-ADDR_MIN_POS = 52;
-MAX_POS = 3400;
-MIN_POS = 600;
-
 CLAW_OPEN = 1300;
 CLAW_CUBE_CLOSE = 2430;
 CLAW_PEN_CLOSE = 2360;
@@ -114,12 +109,19 @@ T_CLAW_OPEN = [1, CLAW_OPEN, 0, 0, 0];
 T_CLAW_CLOSE_CUBE = [1, CLAW_CUBE_CLOSE, 0, 0, 0];
 DEFAULT_POS = [0,0.274,0,0.2048,0];
 
+REST_POS = [2100, 1000, 2900, 2400];
+
 C1_POS = [0.075, -0.20];
 C2_POS = [0.225, 0];
 C3_POS = [0.15, 0.15];
 C4_POS = [0.125, -0.125];
 C5_POS = [0.10, 0];
 C6_POS = [0, 0.10];
+
+% ADDR_MAX_POS = 48;
+% ADDR_MIN_POS = 52;
+% MAX_POS = 3400;
+% MIN_POS = 600;
 
 % % Set max position limit
 % write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_MAX_POS, MAX_POS);
@@ -131,11 +133,11 @@ C6_POS = [0, 0.10];
 %% ---------------------------------- %%
 
 % Change Drive Mode and Profile
-for i=1:length(IDS)
-    write4ByteTxRx(port_num, PROTOCOL_VERSION, IDS(i), ADDR_PRO_DRIVE_MODE, 4); % time based
-    write4ByteTxRx(port_num, PROTOCOL_VERSION, IDS(i), 108, 80); % acc
-    write4ByteTxRx(port_num, PROTOCOL_VERSION, IDS(i), 112, 80); % vel
-end
+% for i=1:length(IDS)-1
+%     write4ByteTxRx(port_num, PROTOCOL_VERSION, IDS(i), ADDR_PRO_DRIVE_MODE, 4); % time based
+%     write4ByteTxRx(port_num, PROTOCOL_VERSION, IDS(i), 108, 80); % acc
+%     write4ByteTxRx(port_num, PROTOCOL_VERSION, IDS(i), 112, 80); % vel
+% end
 
 % Disable Dynamixel Torque
 write1ByteTxRx(port_num, PROTOCOL_VERSION, ID_BASE, ADDR_PRO_TORQUE_ENABLE, TORQUE_DISABLE);
@@ -144,7 +146,7 @@ write1ByteTxRx(port_num, PROTOCOL_VERSION, ID_2, ADDR_PRO_TORQUE_ENABLE, TORQUE_
 write1ByteTxRx(port_num, PROTOCOL_VERSION, ID_3, ADDR_PRO_TORQUE_ENABLE, TORQUE_DISABLE);
 write1ByteTxRx(port_num, PROTOCOL_VERSION, ID_CLAW, ADDR_PRO_TORQUE_ENABLE, TORQUE_DISABLE);
 
-%enable torque
+% Enable Dynamixel Torque
 write1ByteTxRx(port_num, PROTOCOL_VERSION, ID_BASE, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);
 write1ByteTxRx(port_num, PROTOCOL_VERSION, ID_1, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);
 write1ByteTxRx(port_num, PROTOCOL_VERSION, ID_2, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);
@@ -152,134 +154,207 @@ write1ByteTxRx(port_num, PROTOCOL_VERSION, ID_3, ADDR_PRO_TORQUE_ENABLE, TORQUE_
 write1ByteTxRx(port_num, PROTOCOL_VERSION, ID_CLAW, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);
 
 %% Initialise Robot to Default Position With Claw Open
-[x, y, z, gamma] = read_curr_pos(port_num, PROTOCOL_VERSION,ADDR_PRO_PRESENT_POSITION);
+[x, y, z, gamma] = read_curr_pos(port_num);
 init_pos = [0, x, y, z, gamma];
+task_list = [];
 task_list = [init_pos; T_CLAW_OPEN; DEFAULT_POS];
+% randomint = 0;
+% while randomint==0
+%     test = read4ByteTxRx(port_num, PROTOCOL_VERSION, ID_BASE, ADDR_PRO_PRESENT_POSITION);
+%     disp(test);
+%     [x, y, z, gamma] = read_curr_pos(port_num);
+%     disp([x, y, z, gamma]);
+%     pause(0.5);
+% end
 
 %% ---------- Task 2A Translation Waypoints ---------- %%
 % 1 to 4
-task_list = [task_list;
-[0, C1_POS, 0.10, -pi/2]; % above
-[0, C1_POS, 0.04, -pi/2]; % cube pos 1
-T_CLAW_CLOSE_CUBE;
-[0, C1_POS, 0.10, -pi/2]; % above
-[0, C4_POS, 0.10, -pi/2]; % above
-[0, C4_POS, 0.04, -pi/2]; % cube pos 4
-T_CLAW_OPEN;
-];
+% task_list = [task_list;
+% [0, C1_POS, 0.08, -pi/2]; % above
+% [0, C1_POS, 0.06, -pi/2]; % cube pos 1
+% T_CLAW_CLOSE_CUBE;
+% [0, C1_POS, 0.08, -pi/2]; % above
+% [0, C4_POS, 0.10, -pi/2]; % above
+% [0, C4_POS, 0.045, -pi/2]; % cube pos 4
+% T_CLAW_OPEN;
+% ];
+% 
+% % 2 to 5
+% task_list = [task_list;
+% [0, C4_POS, 0.10, -pi/2]; % above
+% [0, 0.2, 0, 0.1, -pi/2]; % midpoint
+% [0, C2_POS, 0.06, -pi/2]; % cube pos 2
+% T_CLAW_CLOSE_CUBE;
+% [0, 0.2, 0, 0.1, -pi/2]; % midpoint
+% [0, C5_POS, 0.10, -pi/2]; % above
+% [0, C5_POS(1)-0.005, C5_POS(2), 0.045, -pi/2]; % cube pos 5
+% T_CLAW_OPEN;
+% ];
+% 
+% % 3 to 6
+% task_list = [task_list;
+% [0, C5_POS, 0.10, -pi/2]; % above
+% [0, C3_POS, 0.08, -pi/2]; % above
+% [0, C3_POS, 0.06, -pi/2]; % cube pos 3
+% T_CLAW_CLOSE_CUBE;
+% [0, C3_POS, 0.08, -pi/2]; % above
+% [0, C6_POS, 0.10, -pi/2]; % above
+% [0, C6_POS, 0.045, -pi/2]; % cube pos 6
+% T_CLAW_OPEN;
+% ];
+% 
+% task_list = [task_list; [0, C6_POS, 0.10, -pi/2]; DEFAULT_POS];
 
-% 2 to 5
-task_list = [task_list;
-[0, C4_POS, 0.10, -pi/2]; % above
-[0, C2_POS, 0.04, -pi/2]; % cube pos 2
-T_CLAW_CLOSE_CUBE;
-[0, C5_POS, 0.10, -pi/2]; % above
-[0, C5_POS, 0.04, -pi/2]; % cube pos 5
-T_CLAW_OPEN;
-];
-
-% 3 to 6
-task_list = [task_list;
-[0, C5_POS, 0.10, -pi/2]; % above
-[0, C3_POS, 0.10, -pi/2]; % above
-[0, C3_POS, 0.04, -pi/2]; % cube pos 3
-T_CLAW_CLOSE_CUBE;
-[0, C3_POS, 0.10, -pi/2]; % above
-[0, C6_POS, 0.10, -pi/2]; % above
-[0, C6_POS, 0.04, -pi/2]; % cube pos 6
-T_CLAW_OPEN;
-];
 
 %% ---------- Task 2B Rotation Waypoints ---------- %%
-task_list = [init_pos; T_CLAW_OPEN; DEFAULT_POS];
-
-% flip 2
-task_list = [task_list;
-% rotation once
-[0, C2_POS, 0.04, -pi/2];
-T_CLAW_CLOSE_CUBE;
-[0, C2_POS, 0.04, -pi/2];
-[0, 0.2, 0, 0.1, -pi/2]; %mid point for rotation
-[0, 0.2, 0, 0.1, 0];
-[0, (C2_POS(1)-0.1), C2_POS(2), 0.04, 0]; % placement
-T_CLAW_OPEN;
-% rotation twice
-[0, C2_POS, 0.04, -pi/2];
-T_CLAW_CLOSE_CUBE;
-[0, C2_POS, 0.04, -pi/2];
-[0, 0.2, 0, 0.1, -pi/2]; %mid point for rotation
-[0, 0.2, 0, 0.1, 0];
-[0, (C2_POS(1)-0.1), C2_POS(2), 0.04, 0]; % placement
-T_CLAW_OPEN;
-];
-
-%flip 3
-task_list = [task_list;
-[0, 0.2, 0, 0.1, 0]; % raise to midpoint
-[0, C3_POS, 0.08, -pi/2]; % above
-[0, C3_POS, 0.04, -pi/2]; % at cube
-T_CLAW_CLOSE_CUBE;
-[0, C3_POS, 0.08, -pi/2]; % above
-[0, C3_POS, 0.1, 0]; % above + rotate
-[0, C3_POS, 0.04, 0]; % at cube
-T_CLAW_OPEN;
-]
-
-%flip 1
-task_list = [task_list;
-[0, C3_POS, 0.1, 0]; % raise
-[0, C1_POS, 0.08, -pi/2]; % above
-[0, C1_POS, 0.04, -pi/2]; % at cube
-T_CLAW_CLOSE_CUBE;
-[0, C1_POS, 0.08, -pi/2]; % above
-[0, C1_POS, 0.1, 0]; % above + rotate
-[0, C1_POS, 0.04, 0]; % at cube
-T_CLAW_OPEN;
-]
+% % flip 2
+% task_list = [task_list;
+% % rotation once
+% [0, (C2_POS(1)+0.008), C2_POS(2), 0.052, -pi/2];
+% T_CLAW_CLOSE_CUBE;
+% [0, 0.2, 0, 0.1, -pi/2]; %mid point for rotation
+% [0, 0.2, 0, 0.15, -pi/4];
+% [0, 0.2, 0, 0.15, 0];
+% [0, (C2_POS(1)-0.01), C2_POS(2), 0.05, 0]; % placement
+% T_CLAW_OPEN;
+% % default pos
+% DEFAULT_POS
+% % rotation twice
+% [0, (C2_POS(1)+0.008), C2_POS(2), 0.052, -pi/2];
+% T_CLAW_CLOSE_CUBE;
+% [0, 0.2, 0, 0.1, -pi/2]; %mid point for rotation
+% [0, 0.2, 0, 0.15, -pi/4];
+% [0, 0.2, 0, 0.15, 0];
+% [0, (C2_POS(1)-0.01), C2_POS(2), 0.05, 0]; % placement
+% T_CLAW_OPEN;
+% ];
+% 
+% flip 3
+% task_list = [task_list;
+% [0, 0.2, 0, 0.15, 0]; % raise to midpoint
+% DEFAULT_POS;
+% [0, C3_POS, 0.08, -pi/2]; % above
+% [0, C3_POS+0.01, 0.052, -pi/2]; % at cube
+% T_CLAW_CLOSE_CUBE;
+% [0, C3_POS, 0.08, -pi/2]; % above
+% [0, C3_POS, 0.15, 0]; % above + rotate
+% [0, (C3_POS(1)-0.01), (C3_POS(2)-0.01), 0.05, 0]; % at cube
+% T_CLAW_OPEN;
+% ];
+% 
+% %flip 1
+% task_list = [task_list;
+% [0, C3_POS, 0.15, 0]; % raise
+% [0, C1_POS, 0.15, 0];
+% [0, C1_POS(1)-0.025, C2_POS(2)+0.075, 0.08, -pi/2]; % above
+% [0, C1_POS, 0.08, -pi/2]; % above
+% [0, C1_POS(1)+0.01, C1_POS(2)-0.01, 0.055, -pi/2]; % at cube
+% T_CLAW_CLOSE_CUBE;
+% [0, C1_POS, 0.08, -pi/2]; % above
+% [0, C1_POS, 0.15, 0]; % above + rotate
+% [0, C1_POS(1)-0.01, C1_POS(2)+0.01, 0.05, 0]; % at cube
+% T_CLAW_OPEN;
+% ];
 
 
 %% ---------- Task 2C Stacking Waypoints ---------- %%
-task_list = [init_pos; T_CLAW_OPEN; DEFAULT_POS];
 % stacking all on five
+% rotate 2
+task_list = [task_list;
+% rotation once
+[0, (C2_POS(1)+0.008), C2_POS(2), 0.052, -pi/2];
+T_CLAW_CLOSE_CUBE;
+[0, 0.2, 0, 0.1, -pi/2]; %mid point for rotation
+[0, 0.2, 0, 0.15, -pi/4];
+[0, 0.2, 0, 0.15, 0];
+[0, (C2_POS(1)-0.01), C2_POS(2), 0.05, 0]; % placement
+T_CLAW_OPEN;
+% default pos
+DEFAULT_POS
+% rotation twice
+[0, (C2_POS(1)+0.008), C2_POS(2), 0.052, -pi/2];
+T_CLAW_CLOSE_CUBE;
+[0, 0.2, 0, 0.1, -pi/2]; %mid point for rotation
+[0, 0.2, 0, 0.15, -pi/4];
+[0, 0.2, 0, 0.15, 0];
+[0, (C2_POS(1)-0.01), C2_POS(2), 0.05, 0]; % placement
+T_CLAW_OPEN;
+];
+
+task_list = [task_list;
+    [0, 0.2, 0, 0.15, 0];
+    DEFAULT_POS;
+ ];
 
 % translating cube 2 -> 5
 task_list = [task_list;
-[0, C4_POS, 0.10, -pi/2]; % above
-[0, C2_POS, 0.04, -pi/2]; % cube pos 2
+[0, C2_POS, 0.06, -pi/2]; % cube pos 2
 T_CLAW_CLOSE_CUBE;
 [0, C5_POS, 0.10, -pi/2]; % above
-[0, C5_POS, 0.04, -pi/2]; % cube pos 5
+[0, C5_POS, 0.052, -pi/2]; % cube pos 5
 T_CLAW_OPEN;
 ];
 
+%rotate 3
+task_list = [task_list;
+[0, 0.2, 0, 0.15, 0]; % raise to midpoint
+DEFAULT_POS;
+[0, C3_POS, 0.08, -pi/2]; % above
+[0, C3_POS+0.01, 0.052, -pi/2]; % at cube
+T_CLAW_CLOSE_CUBE;
+[0, C3_POS, 0.08, -pi/2]; % above
+[0, C3_POS, 0.15, 0]; % above + rotate
+[0, (C3_POS(1)-0.01), (C3_POS(2)-0.01), 0.05, 0]; % at cube
+T_CLAW_OPEN;
+];
 % translating cube 3 -> 5
 task_list = [task_list;
-[0, C5_POS, 0.10, -pi/2]; % above
-[0, C3_POS, 0.10, -pi/2]; % above
-[0, C3_POS, 0.04, -pi/2]; % cube pos 3
+[0, (C3_POS(1)-0.01), (C3_POS(2)-0.01), 0.10, 0]; % above
+[0, (C3_POS(1)-0.05), (C3_POS(2)-0.05), 0.10, -pi/2]; % midpoint
+[0, C3_POS, 0.08, -pi/2]; % above
+[0, C3_POS, 0.055, -pi/2]; % cube pos 3
 T_CLAW_CLOSE_CUBE;
-[0, C3_POS, 0.10, -pi/2]; % above
-[0, C5_POS, 0.10, -pi/2]; % above
-[0, C5_POS, 0.04, -pi/2]; % cube pos 5
+[0, C3_POS, 0.08, -pi/2]; % above
+[0, C5_POS, 0.075, -pi/2]; % cube pos 5
 T_CLAW_OPEN;
 ];
 
+task_list = [task_list;
+[0, C5_POS, 0.12, -pi/2]; % raise
+[0, C1_POS(1)-0.025, C1_POS(2)+0.075, 0.08, -pi/2]; % above
+[0, C1_POS, 0.08, -pi/2]; % above
+[0, C1_POS(1)+0.01, C1_POS(2)-0.01, 0.055, -pi/2]; % at cube
+T_CLAW_CLOSE_CUBE;
+[0, C1_POS, 0.08, -pi/2]; % above
+[0, C1_POS, 0.15, 0]; % above + rotate
+[0, C1_POS(1)-0.01, C1_POS(2)+0.01, 0.05, 0]; % at cube
+T_CLAW_OPEN;
+[0, C1_POS * 2 / 3, 0.15, -pi/2];
+];
 % translating cube 1 -> 5
 task_list = [task_list;
-[0, C5_POS, 0.10, -pi/2]; % above
-[0, C1_POS, 0.10, -pi/2]; % above
-[0, C1_POS, 0.04, -pi/2]; % cube pos 1
+[0, C1_POS, 0.08, -pi/2]; % above
+[0, C1_POS, 0.055, -pi/2]; % cube pos 1
 T_CLAW_CLOSE_CUBE;
-[0, C1_POS, 0.10, -pi/2]; % above
-[0, C5_POS, 0.10, -pi/2]; % above
-[0, C5_POS, 0.04, -pi/2]; % cube pos 5
+[0, C1_POS, 0.08, -pi/2]; % above
+[0, C5_POS, 0.10, -pi/2]; % cube pos 5
 T_CLAW_OPEN;
 ];
 
+task_list = [task_list; [0, C5_POS, 0.10, -pi/2]; DEFAULT_POS];
 
 %% ---------- EXECUTION ---------- %%
-for i in size(task_list, 1):
-    task_handler(task_list(i), port_num, PROTOCOL_VERSION);
+for i= 1:size(task_list, 1)
+    task_handler(task_list(i, :), port_num);
+end
+
+%% return to rest
+for j=1:10
+    for i=1:4
+        write4ByteTxRx(port_num, PROTOCOL_VERSION, IDS(i), ADDR_PRO_GOAL_POSITION, REST_POS(i));
+    end
+    pause(0.1);
+end
 
 
 % Disable torque
