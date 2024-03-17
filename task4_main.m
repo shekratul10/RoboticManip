@@ -102,21 +102,25 @@ end
 %% ----- SET CONSTANTS ----------- %%
 
 CLAW_OPEN = 1300;
-CLAW_CUBE_CLOSE = 2430;
-CLAW_PEN_CLOSE = 2400;
+CLAW_ERASER_CLOSE = 2430;
+CLAW_PEN_CLOSE = 2380;
 
 T_CLAW_OPEN = [1, CLAW_OPEN, 0, 0, 0];
 T_CLAW_CLOSE_PEN = [1, CLAW_PEN_CLOSE, 0, 0, 0];
+T_CLAW_CLOSE_ERASER = [1, CLAW_ERASER_CLOSE, 0, 0, 0];
 DEFAULT_POS = [0,0.274,0,0.2048,0];
 
 REST_POS = [2100, 1000, 2900, 2400];
 
 PICKUP_POS = [0, -0.15];
 OFFSET_PEN = 0.08;
+OFFSET_PICKUP_ERASER = 0.01;
 
-BL = [0.2,0.06];
-BR = [0.2,0.14];
-TR = [0.125,0.14];
+BL = [0.15,0.06];
+TR = [0.10,0.14];
+
+ERASER_POS = [0.125, -0.125];
+ERASER_OFFSET = 0.02;
 
 % ADDR_MAX_POS = 48;
 % ADDR_MIN_POS = 52;
@@ -151,33 +155,25 @@ task_list = [init_pos; T_CLAW_OPEN; DEFAULT_POS];
 
 %% ---------- Pick Up Pen ---------- %%
 task_list = [task_list;
-[0, PICKUP_POS, 0.1, -pi/2];
-[0, PICKUP_POS, 0.01, -pi/2];
-T_CLAW_CLOSE_PEN;
-[0, PICKUP_POS, 0.1, -pi/2];
-[0, PICKUP_POS, 0.15, 0];
-[0, [BL, OFFSET_PEN+0.05], 0];
-[0, [BL, OFFSET_PEN], 0]];
-
+[0, ERASER_POS, 0.10, -pi/2]; % above
+[0, ERASER_POS, ERASER_OFFSET, -pi/2]; % cube pos 4
+T_CLAW_CLOSE_ERASER;
+[0, ERASER_POS, 0.10, -pi/2]; % above
+[0, [BL, ERASER_OFFSET+0.02], -pi/2];
+[0, [BL, ERASER_OFFSET], -pi/2]];
 pause(0.5);
 
 %% ---------- Draw Triangle ---------- %%
-LINE_STEPS = 20;
 task_list = [task_list;
-            linear_interpolation([BL, OFFSET_PEN], [BR, OFFSET_PEN], LINE_STEPS, 0);
-            linear_interpolation([BR, OFFSET_PEN], [TR, OFFSET_PEN], LINE_STEPS*2, 0);
-            linear_interpolation([TR, OFFSET_PEN], [BL, OFFSET_PEN], LINE_STEPS, 0)];
+            cleaning_interpolation([BL, ERASER_OFFSET], [TR, ERASER_OFFSET], -pi/2);];
 
-%% ---------- Draw Arc ---------- %%
-ARC_STEPS = 100;
-task_list = [task_list; arc_interpolation(ARC_STEPS, OFFSET_PEN)];
+%% ---------- RETURN ERASER ---------- %%
 
 pause(0.5);
 task_list = [task_list;
-[0,BR,OFFSET_PEN+0.05,0];
-[0, PICKUP_POS, 0.15, 0];
-[0, PICKUP_POS, 0.1, -pi/2];
-[0, PICKUP_POS, 0.04, -pi/2];
+[0,TR,ERASER_OFFSET+0.05,-pi/2];
+[0, ERASER_POS, 0.1, -pi/2];
+[0, ERASER_POS, 0.04, -pi/2];
 T_CLAW_OPEN;
 ];
 

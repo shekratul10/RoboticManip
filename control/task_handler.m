@@ -9,7 +9,7 @@ function task_handler(task, port_num)
     ADDR_PRO_GOAL_POSITION       = 116; 
     
     PAUSE_PRE_CLAW = 0.5;
-    PAUSE_POST_CLAW = 0.5;
+    PAUSE_POST_CLAW = 0.75;
     PAUSE_POST_MOVEMENT = 0.5;
     
     if task(1) == 0
