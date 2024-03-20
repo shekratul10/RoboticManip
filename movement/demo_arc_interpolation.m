@@ -1,8 +1,8 @@
-function task_list = arc_interpolation(num_points, offset)
-    radius = 0.04;
-    center = [0.2, 0.1, offset];
+function task_list = demo_arc_interpolation(num_points, offset)
+    radius = 0.025;
+    center = [0.175, 0.175, offset];
     
-    theta = linspace(-pi/2, pi/2, num_points); % Angle ranging from 0 to pi for semicircle
+    theta = linspace(0, -3 * pi/2, num_points); % Angle ranging from 0 to pi for semicircle
     x = center(1) - radius * cos(theta);
     y = center(2) + radius * sin(theta);
     z = center(3) * ones(size(x)); % Keep z constant for xy plane

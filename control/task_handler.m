@@ -8,9 +8,9 @@ function task_handler(task, port_num)
     PROTOCOL_VERSION            = 2.0;
     ADDR_PRO_GOAL_POSITION       = 116; 
     
-    PAUSE_PRE_CLAW = 0.5;
-    PAUSE_POST_CLAW = 0.75;
-    PAUSE_POST_MOVEMENT = 0.5;
+    PAUSE_PRE_CLAW = 0.25;
+    PAUSE_POST_CLAW = 0.25;
+    PAUSE_POST_MOVEMENT = 0.25;
     
     if task(1) == 0
         [x, y, z, gamma] = read_curr_pos(port_num);
@@ -44,5 +44,8 @@ function task_handler(task, port_num)
         write4ByteTxRx(port_num, PROTOCOL_VERSION, ID_1, ADDR_PRO_GOAL_POSITION, mapping_angle('t1', theta(2)));
         write4ByteTxRx(port_num, PROTOCOL_VERSION, ID_2, ADDR_PRO_GOAL_POSITION, mapping_angle('t2', theta(3)));
         write4ByteTxRx(port_num, PROTOCOL_VERSION, ID_3, ADDR_PRO_GOAL_POSITION, mapping_angle('t3', theta(4)));
+
+    elseif task(1) == 3
+        pause(task(2));
     end
 end

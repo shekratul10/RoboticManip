@@ -5,6 +5,8 @@ function output = mapping_angle(theta, angle)
         min_val = 90/0.088;
         max_val = 270/0.088;
         output = ((angle - min_angle) / (max_angle - min_angle)) * (max_val - min_val) + min_val;
+        %calibration
+        output = output+25;
 
     elseif strcmpi(theta, 't1')
         % 0 is up right, +pi/2 is all the way back, -pi/2 is all the way forward
@@ -19,7 +21,9 @@ function output = mapping_angle(theta, angle)
         max_angle = pi/2;
         min_val = 270/0.088;
         max_val = 90/0.088;
-        output = ((angle - min_angle) / (max_angle - min_angle)) * (max_val - min_val) + min_val;
+        output = ((angle - min_angle) / (max_angle - min_angle)) * (max_val - min_val) + min_val;        %calibration
+        
+        output = output-10;
 
     elseif strcmpi(theta, 't3')
         min_angle = -pi/2;
@@ -27,6 +31,9 @@ function output = mapping_angle(theta, angle)
         max_val = 90/0.088;
         min_val = 270/0.088;
         output = ((angle - min_angle) / (max_angle - min_angle)) * (max_val - min_val) + min_val;
+
+        %calibration
+        output = output+10;
    else
         error('Invalid joint');
     end

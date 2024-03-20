@@ -5,7 +5,7 @@ function task_list = cleaning_interpolation(coord1, coord2, gamma)
     y2 = coord2(2);
 
     % Change stepsize
-    stepsize = 0.0025;
+    stepsize = 0.01;
     
     num_x = ceil((max(x1, x2) - min(x1, x2)) / stepsize) + 1;
     num_y = ceil((max(y1, y2) - min(y1, y2)) / stepsize) + 1;

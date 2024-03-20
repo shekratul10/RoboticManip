@@ -48,7 +48,7 @@ ID_CLAW                     = 15;
 IDS = [ID_BASE, ID_1, ID_2, ID_3, ID_CLAW];
 
 BAUDRATE                    = 115200;
-DEVICENAME                  = 'COM6';
+DEVICENAME                  = 'COM5';
                                             
 TORQUE_ENABLE               = 1;            % Value for enabling the torque
 TORQUE_DISABLE              = 0;            % Value for disabling the torque
@@ -102,7 +102,7 @@ end
 %% ----- SET CONSTANTS ----------- %%
 
 CLAW_OPEN = 1300;
-CLAW_ERASER_CLOSE = 2430;
+CLAW_ERASER_CLOSE = 2450;
 CLAW_PEN_CLOSE = 2380;
 
 T_CLAW_OPEN = [1, CLAW_OPEN, 0, 0, 0];
@@ -114,13 +114,19 @@ REST_POS = [2100, 1000, 2900, 2400];
 
 PICKUP_POS = [0, -0.15];
 OFFSET_PEN = 0.08;
-OFFSET_PICKUP_ERASER = 0.01;
+OFFSET_PICKUP_ERASER = 0.04;
 
-BL = [0.15,0.06];
-TR = [0.10,0.14];
+% BL = [0.15,0.06];
+% TR = [0.10,0.14];
+
+
+BL = [0.20,0.06];
+TR = [0.10,0.175];
+
 
 ERASER_POS = [0.125, -0.125];
-ERASER_OFFSET = 0.02;
+ERASER_OFFSET = 0.035;
+ANGLE_ERASER = -pi/4;
 
 % ADDR_MAX_POS = 48;
 % ADDR_MIN_POS = 52;
@@ -138,6 +144,8 @@ ERASER_OFFSET = 0.02;
 
 % Change Drive Mode and Profile
 for i=1:length(IDS)
+    % Put actuator into Position Control Mode
+    write1ByteTxRx(port_num, PROTOCOL_VERSION, IDS(i), ADDR_PRO_OPERATING_MODE, 3);
     write4ByteTxRx(port_num, PROTOCOL_VERSION, IDS(i), ADDR_PRO_DRIVE_MODE, 4); % time based
     write4ByteTxRx(port_num, PROTOCOL_VERSION, IDS(i), 108, 80); % acc
     write4ByteTxRx(port_num, PROTOCOL_VERSION, IDS(i), 112, 80); % vel
@@ -155,26 +163,28 @@ task_list = [init_pos; T_CLAW_OPEN; DEFAULT_POS];
 
 %% ---------- Pick Up Pen ---------- %%
 task_list = [task_list;
-[0, ERASER_POS, 0.10, -pi/2]; % above
-[0, ERASER_POS, ERASER_OFFSET, -pi/2]; % cube pos 4
+[0, ERASER_POS, 0.10, ANGLE_ERASER]; % above
+[0, ERASER_POS, OFFSET_PICKUP_ERASER, ANGLE_ERASER]; % cube pos 4
 T_CLAW_CLOSE_ERASER;
-[0, ERASER_POS, 0.10, -pi/2]; % above
-[0, [BL, ERASER_OFFSET+0.02], -pi/2];
-[0, [BL, ERASER_OFFSET], -pi/2]];
+[0, ERASER_POS, 0.10, ANGLE_ERASER]; % above
+[0, [BL, ERASER_OFFSET+0.02], ANGLE_ERASER];
+[0, [BL, ERASER_OFFSET], ANGLE_ERASER]];
 pause(0.5);
 
 %% ---------- Draw Triangle ---------- %%
 task_list = [task_list;
-            cleaning_interpolation([BL, ERASER_OFFSET], [TR, ERASER_OFFSET], -pi/2);];
+            cleaning_interpolation([BL, ERASER_OFFSET], [TR, ERASER_OFFSET], ANGLE_ERASER);];
 
 %% ---------- RETURN ERASER ---------- %%
 
 pause(0.5);
 task_list = [task_list;
-[0,TR,ERASER_OFFSET+0.05,-pi/2];
-[0, ERASER_POS, 0.1, -pi/2];
-[0, ERASER_POS, 0.04, -pi/2];
+[0,TR,ERASER_OFFSET+0.05,ANGLE_ERASER];
+[0, ERASER_POS, 0.1, ANGLE_ERASER];
+[0, ERASER_POS, OFFSET_PICKUP_ERASER+0.02, ANGLE_ERASER];
 T_CLAW_OPEN;
+[0, ERASER_POS, OFFSET_PICKUP_ERASER+0.05, ANGLE_ERASER]
+DEFAULT_POS;
 ];
 
 %% ---------- EXECUTION ---------- %%

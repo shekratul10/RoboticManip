@@ -102,21 +102,36 @@ end
 %% ----- SET CONSTANTS ----------- %%
 
 CLAW_OPEN = 1300;
-CLAW_PEN_CLOSE = 2420;
+CLAW_ERASER_CLOSE = 2450;
+CLAW_PEN_CLOSE = 2400;
 
 T_CLAW_OPEN = [1, CLAW_OPEN, 0, 0, 0];
 T_CLAW_CLOSE_PEN = [1, CLAW_PEN_CLOSE, 0, 0, 0];
+T_CLAW_CLOSE_ERASER = [1, CLAW_ERASER_CLOSE, 0, 0, 0];
 DEFAULT_POS = [0,0.274,0,0.2048,0];
 
 REST_POS = [2100, 1000, 2900, 2400];
 
 PICKUP_POS = [0, -0.15];
 OFFSET_PEN = 0.08;
+OFFSET_PICKUP_ERASER = 0.04;
 
-P1 = [0.10, 0.175];
-P2 = [0.205, 0.175];
-P3 = [0.15, 0.125];
-P4 = [0.15, 0.175];
+P1 = [0.20, 0.05];
+P2 = [0.20, 0.175];
+P3 = [0.10, 0.175];
+P4 = [0.10, 0.05];
+
+% 
+% CLEAN_BL = [0.15,0.06];
+% CLEAN_TR = [0.10,0.14];
+
+
+ERASER_POS = [0.125, -0.125];
+ERASER_OFFSET = 0.035;
+ANGLE_ERASER = -pi/4;
+
+CLEAN_BL = [0.225,0.025];
+CLEAN_TR = [0.10,0.175];
 
 % ADDR_MAX_POS = 48;
 % ADDR_MIN_POS = 52;
@@ -165,31 +180,51 @@ pause(0.5);
 %% ---------- Draw Triangle ---------- %%
 LINE_STEPS = 40;
 task_list = [task_list;
-            linear_interpolation([P1, OFFSET_PEN], [P2, OFFSET_PEN], LINE_STEPS*1.5, 0);
+            linear_interpolation([P1, OFFSET_PEN], [P2, OFFSET_PEN], LINE_STEPS, 0);
             linear_interpolation([P2, OFFSET_PEN], [P3, OFFSET_PEN], LINE_STEPS, 0);
-            linear_interpolation([P3, OFFSET_PEN], [P4, OFFSET_PEN], LINE_STEPS, 0)];
+            linear_interpolation([P3, OFFSET_PEN], [P1, OFFSET_PEN], LINE_STEPS, 0)];
 
 %% ---------- Draw Arc ---------- %%
-ARC_STEPS = 100;
-task_list = [task_list; demo_arc_interpolation(ARC_STEPS, OFFSET_PEN)];
-%% ---------- EXECUTION 1 ---------- %%
-for i =1:size(task_list, 1)
-    task_handler(task_list(i, :), port_num);
-end
+% ARC_STEPS = 100;
+% task_list = [task_list; arc_interpolation(ARC_STEPS, OFFSET_PEN)];
 
-
-%% --- PICK UP AND RETURN ---%
-[x, y, z, gamma] = read_curr_pos(port_num);
-curr_pos = [0, x, y, z, gamma];
-target_pos = [0, x, y, z+0.05, gamma];
-
-task_list = [
-target_pos;
+pause(0.5);
+task_list = [task_list;
+[0,P3,OFFSET_PEN+0.05,0];
 [0, PICKUP_POS, 0.15, 0];
 [0, PICKUP_POS, 0.1, -pi/2];
 [0, PICKUP_POS, 0.04, -pi/2];
 T_CLAW_OPEN;
 [0, PICKUP_POS, 0.1, -pi/2];
+];
+
+%% ---------- EXECUTION ---------- %%
+for i =1:size(task_list, 1)
+    task_handler(task_list(i, :), port_num);
+end
+
+%% ---------- Pick Up Eraser ---------- %%
+task_list = [[0, ERASER_POS, 0.10, ANGLE_ERASER]; % above
+[0, ERASER_POS, OFFSET_PICKUP_ERASER, ANGLE_ERASER]; % cube pos 4
+T_CLAW_CLOSE_ERASER;
+[0, ERASER_POS, 0.10, ANGLE_ERASER]; % above
+[0, [CLEAN_BL, ERASER_OFFSET+0.02], ANGLE_ERASER];
+[0, [CLEAN_BL, ERASER_OFFSET], ANGLE_ERASER]];
+pause(0.5);
+
+%% ---------- Clean Surface ---------- %%
+task_list = [task_list;
+            cleaning_interpolation([CLEAN_BL, ERASER_OFFSET], [CLEAN_TR, ERASER_OFFSET], ANGLE_ERASER);];
+
+%% ---------- RETURN ERASER ---------- %%
+
+pause(0.5);
+task_list = [task_list;
+[0,CLEAN_TR,ERASER_OFFSET+0.05,ANGLE_ERASER];
+[0, ERASER_POS, 0.1, ANGLE_ERASER];
+[0, ERASER_POS, OFFSET_PICKUP_ERASER+0.02, ANGLE_ERASER];
+T_CLAW_OPEN;
+[0, ERASER_POS, OFFSET_PICKUP_ERASER+0.05, ANGLE_ERASER]
 DEFAULT_POS;
 ];
 

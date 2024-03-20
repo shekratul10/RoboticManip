@@ -48,7 +48,7 @@ ID_CLAW                     = 15;
 IDS = [ID_BASE, ID_1, ID_2, ID_3, ID_CLAW];
 
 BAUDRATE                    = 115200;
-DEVICENAME                  = 'COM6';
+DEVICENAME                  = 'COM7';
                                             
 TORQUE_ENABLE               = 1;            % Value for enabling the torque
 TORQUE_DISABLE              = 0;            % Value for disabling the torque
@@ -134,6 +134,7 @@ TR = [0.125,0.14];
 
 % Change Drive Mode and Profile
 for i=1:length(IDS)
+    write1ByteTxRx(port_num, PROTOCOL_VERSION, IDS(i), ADDR_PRO_OPERATING_MODE, 3);
     write4ByteTxRx(port_num, PROTOCOL_VERSION, IDS(i), ADDR_PRO_DRIVE_MODE, 4); % time based
     write4ByteTxRx(port_num, PROTOCOL_VERSION, IDS(i), 108, 80); % acc
     write4ByteTxRx(port_num, PROTOCOL_VERSION, IDS(i), 112, 80); % vel
@@ -152,7 +153,7 @@ task_list = [init_pos; T_CLAW_OPEN; DEFAULT_POS];
 %% ---------- Pick Up Pen ---------- %%
 task_list = [task_list;
 [0, PICKUP_POS, 0.1, -pi/2];
-[0, PICKUP_POS, 0.01, -pi/2];
+[0, PICKUP_POS, 0.02, -pi/2];
 T_CLAW_CLOSE_PEN;
 [0, PICKUP_POS, 0.1, -pi/2];
 [0, PICKUP_POS, 0.15, 0];
